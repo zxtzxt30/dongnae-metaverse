@@ -1,0 +1,16 @@
+name: 관리자 입장 승인
+run-name: "Dongnae admin ${{ inputs.code }}"
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: 관리자 입장 화면에 표시된 승인 코드
+        required: true
+        type: string
+permissions: {}
+jobs:
+  record:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo approved

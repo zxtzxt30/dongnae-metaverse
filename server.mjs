@@ -86,7 +86,14 @@ setInterval(()=>{
  if(changed.size){broadcast({type:'move',positions:[...changed].map(p=>[p.id,p.x,p.z,p.a])});changed.clear()}
 },100);
 setInterval(()=>{for(const ws of room.clients){if(!ws.alive){ws.terminate();continue}ws.alive=false;ws.ping()}},25000);
-server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log('Listening on port',server.address().port));
+server.listen(port,process.env.HOST||'0.0.0.0',async()=>{
+ console.log('Listening on port',server.address().port);
+ if(process.env.MOBILE_RELAY==='1'){
+  const {runMobileRelay}=await import('./mobile-relay.mjs');
+  await runMobileRelay(server.address().port,process.env.EVENT_END);
+ }
+});
+
 
 
 

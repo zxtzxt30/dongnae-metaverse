@@ -7,23 +7,47 @@ const invite=new URLSearchParams(location.hash.slice(1)).get('invite');
 const button=$('button');
 status.textContent=invite?'옷 색상을 고른 뒤 입장하세요.':'행사 공용 QR로 접속해 주세요.';
 button.disabled=!invite;
+const adminPage=location.pathname==='/admin';
+let ticket,isAdmin=false;
+if(adminPage){
+ document.querySelector('h1').textContent='관리자 입장';
+ $('#nick').value='관리자';$('#nick').readOnly=true;
+ const panel=document.createElement('section');
+ panel.innerHTML='<button type="button" id="begin">GitHub 계정으로 인증</button><div hidden id="approval"><p>아래 코드를 복사한 뒤 GitHub에서 <b>Run workflow</b>를 눌러 입력하세요.</p><input type="text" id="code" aria-label="승인 코드" readonly><p><a target="_blank" rel="noopener noreferrer" href="https://github.com/zxtzxt30/dongnae-metaverse/actions/workflows/admin-entry.yml">GitHub 승인 화면 열기</a></p><button type="button" id="check">승인 확인</button></div>';
+ form.insertBefore(panel,status);button.disabled=true;
+ status.textContent='zxtzxt30 계정으로 승인해 주세요.';
+ let proof;
+ $('#begin').onclick=async()=>{
+  try{const res=await fetch('/admin/begin',{method:'POST'});if(!res.ok)throw Error();
+   const challenge=await res.json();proof=challenge.proof;$('#code').value=challenge.code;$('#approval').hidden=false;$('#begin').hidden=true;
+  }catch{status.textContent='인증을 시작할 수 없습니다. 운영 시간을 확인해 주세요.'}
+ };
+ $('#code').onclick=e=>e.target.select();
+ $('#check').onclick=async()=>{
+  try{const res=await fetch('/admin/check',{method:'POST',headers:{Authorization:'Bearer '+proof}});
+   if(res.status===202){status.textContent='승인 대기 중입니다. GitHub 승인 후 10초 뒤 다시 확인하세요.';return}
+   if(!res.ok)throw Error();ticket=(await res.json()).ticket;
+   panel.hidden=true;button.disabled=false;status.textContent='관리자 인증 완료 · 90초 안에 입장하세요.';
+  }catch{status.textContent='인증을 확인할 수 없습니다. 다시 시도하거나 새로고침해 주세요.'}
+ };
+}
 const roster=new Map();
 let socket,myId,updateWorld=()=>{},ended=false;
-function updateCount(){hud.textContent='함께 산책 중 '+roster.size+' / 160명'}
+function updateCount(){hud.textContent=isAdmin?'관리자 모드':(roster.size>1?'관리자 접속 중':'동네 산책')}
 form.onsubmit=e=>{
  e.preventDefault();if(socket)return;
  ended=false;button.disabled=true;status.textContent='입장 확인 중…';
  socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/room');
  socket.onclose=({code})=>{
- ended=true;const message=({4001:'행사 QR을 다시 확인해 주세요.',4003:'지금은 행사 운영 시간이 아닙니다.',4010:'3D 장면을 불러오지 못했습니다. 연결 상태를 확인하고 다시 접속해 주세요.',4004:'160명 정원이 찼습니다. 잠시 후 다시 시도해 주세요.'})[code]||'연결이 종료되었습니다.';
+ ended=true;const message=({4001:'행사 QR을 다시 확인해 주세요.',4005:'관리자가 이미 접속 중입니다.',4003:'지금은 행사 운영 시간이 아닙니다.',4010:'3D 장면을 불러오지 못했습니다. 연결 상태를 확인하고 다시 접속해 주세요.',4004:'160명 정원이 찼습니다. 잠시 후 다시 시도해 주세요.'})[code]||'연결이 종료되었습니다.';
  form.hidden=false;stick.hidden=true;hud.hidden=true;status.textContent=message;button.disabled=false;button.textContent='다시 접속';form.onsubmit=e=>{e.preventDefault();location.reload()};
  document.querySelector('canvas')?.remove();
  };
- socket.onopen=()=>socket.send(JSON.stringify({type:'join',token:invite,name:$('#nick').value,color:form.elements.color.value}));
+ socket.onopen=()=>socket.send(JSON.stringify({type:'join',token:adminPage?undefined:invite,ticket,name:$('#nick').value,color:form.elements.color.value}));
  socket.onmessage=e=>{
  const m=JSON.parse(e.data);
  if(m.type==='welcome'){
-  myId=m.id;for(const p of m.players)roster.set(p.id,p);
+  isAdmin=m.isAdmin===true;myId=m.id;for(const p of m.players)roster.set(p.id,p);
   status.textContent='동네를 불러오는 중…';start().catch(err=>{console.error(err);socket.close(4010,'render');});
  }else if(m.type==='enter')roster.set(m.player.id,m.player);
  else if(m.type==='leave')roster.delete(m.id);
@@ -125,7 +149,7 @@ async function start(){
  if(playing&&speed){const dx=x*Math.cos(yaw)+z*Math.sin(yaw),dz=z*Math.cos(yaw)-x*Math.sin(yaw);
  person.position.x+=dx*walkSpeed*dt/Math.max(1,speed);person.position.z+=dz*walkSpeed*dt/Math.max(1,speed);person.rotation.y=Math.atan2(dx,dz);step+=dt*9;dirty=true}
  legs.forEach((leg,i)=>leg.rotation.x=speed?Math.sin(step+i*Math.PI)*.32:0);
- if(dirty&&now-lastSend>=100&&socket.readyState===1){
+ if(isAdmin&&dirty&&now-lastSend>=100&&socket.readyState===1){
   socket.send(JSON.stringify({type:'move',x:person.position.x,z:person.position.z,a:person.rotation.y}));lastSend=now;dirty=false;
  }
  for(const [id,{avatar}] of peers){
@@ -135,6 +159,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

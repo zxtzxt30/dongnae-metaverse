@@ -34,6 +34,7 @@ if(adminPage){
  };
 }
 }
+const adminHeight=1.5;
 const roster=new Map();
 let socket,myId,updateWorld=()=>{},ended=false;
 function updateCount(){hud.textContent=isAdmin?'관리자 모드':(roster.size>1?'관리자 접속 중':'동네 산책')}
@@ -120,7 +121,7 @@ async function start(){
  legs=[-1,1].map(s=>piece(capsule(.096,.43),0x303f52,.115*s,.311,0));
  cloth.color.set(form.elements.color.value);
  }
- const mine=roster.get(myId);person.position.set(mine.x,0,mine.z);
+ const mine=roster.get(myId);person.position.set(mine.x,isAdmin?adminHeight:0,mine.z);
  const peers=new Map();
  function addPeer(p){
   const avatar=new T.Group();
@@ -139,7 +140,7 @@ async function start(){
    scene.remove(peer.avatar);peer.tag.material.map.dispose();peer.tag.material.dispose();peers.delete(id);
   }
   for(const [id,p] of roster)if(id!==myId&&!peers.has(id)){
-   const peer=addPeer(p);peer.avatar.position.set(p.x,0,p.z);peers.set(id,peer);
+   const peer=addPeer(p);peer.avatar.position.set(p.x,adminHeight,p.z);peers.set(id,peer);
   }
  };
  updateWorld();
@@ -186,6 +187,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

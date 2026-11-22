@@ -9,11 +9,12 @@ status.textContent=invite?'옷 색상을 고른 뒤 입장하세요.':'행사 �
 button.disabled=!invite;
 const adminPage=location.pathname==='/admin';
 const hostKey=adminPage?new URLSearchParams(location.hash.slice(1)).get('host'):null;
+const mobilePass=adminPage?new URLSearchParams(location.hash.slice(1)).get('pass'):null;
 let ticket,isAdmin=false;
 if(adminPage){
  document.querySelector('h1').textContent='관리자 입장';
  $('#nick').value='관리자';$('#nick').readOnly=true;
- if(hostKey){status.textContent='관리자로 입장하는 중…'}else{
+ if(hostKey||mobilePass){status.textContent='관리자로 입장하는 중…'}else{
  const panel=document.createElement('section');
  panel.innerHTML='<button type="button" id="begin">GitHub 계정으로 인증</button><div hidden id="approval"><p>아래 코드를 복사한 뒤 GitHub에서 <b>Run workflow</b>를 눌러 입력하세요.</p><input type="text" id="code" aria-label="승인 코드" readonly><p><a target="_blank" rel="noopener noreferrer" href="https://github.com/zxtzxt30/dongnae-metaverse/actions/workflows/admin-entry.yml">GitHub 승인 화면 열기</a></p><button type="button" id="check">승인 확인</button></div>';
  form.insertBefore(panel,status);button.disabled=true;
@@ -47,7 +48,7 @@ form.onsubmit=e=>{
  form.hidden=false;stick.hidden=true;hud.hidden=true;status.textContent=message;button.disabled=false;button.textContent='다시 접속';form.onsubmit=e=>{e.preventDefault();location.reload()};
  document.querySelector('canvas')?.remove();
  };
- socket.onopen=()=>socket.send(JSON.stringify({type:'join',token:adminPage?undefined:invite,ticket,hostKey,name:$('#nick').value,color:form.elements.color.value}));
+ socket.onopen=()=>socket.send(JSON.stringify({type:'join',token:adminPage?undefined:invite,ticket,hostKey,mobilePass,name:$('#nick').value,color:form.elements.color.value}));
  socket.onmessage=e=>{
  const m=JSON.parse(e.data);
  if(m.type==='welcome'){
@@ -59,7 +60,7 @@ form.onsubmit=e=>{
  updateCount();updateWorld();
  };
 };
-if(hostKey)form.requestSubmit();
+if(hostKey||mobilePass)form.requestSubmit();
 async function start(){
  const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
  document.body.prepend(renderer.domElement);
@@ -187,6 +188,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

@@ -2,7 +2,7 @@ import {createAdminEntry} from './admin-entry.mjs';
 import http from 'node:http';
 import {readFileSync,createReadStream,statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHmac,timingSafeEqual} from 'node:crypto';
 import {WebSocketServer,WebSocket} from 'ws';
 
 const token=process.env.EVENT_TOKEN;
@@ -11,6 +11,18 @@ if(!token || token.length<16 || !(start<end)) throw Error('Set EVENT_TOKEN (16+ 
 const port=Number(process.env.PORT||3000);
 const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/admin',['index.html','text/html; charset=utf-8']],['/walk.js',['walk.js','text/javascript']],['/ci.glb',['ci.glb','model/gltf-binary']],['/town.glb',['town.glb','model/gltf-binary']]]);
 const adminEntry=createAdminEntry();
+const usedMobilePasses=new Map();
+function consumeMobilePass(pass,key){
+ if(!key||key.length<32||typeof pass!=='string')return false;
+ const match=/^(\d{10})\.([0-9a-f]{32})\.([0-9a-f]{64})$/.exec(pass);
+ if(!match)return false;
+ const [,expiry,nonce,signature]=match,now=Math.floor(Date.now()/1000);
+ if(+expiry<=now||+expiry>now+180||usedMobilePasses.has(nonce))return false;
+ const mac=createHmac('sha256',key).update('dongnae-mobile:'+expiry+'.'+nonce).digest();
+ if(!timingSafeEqual(mac,Buffer.from(signature,'hex')))return false;
+ for(const [id,time] of usedMobilePasses)if(time<=now)usedMobilePasses.delete(id);
+ usedMobilePasses.set(nonce,+expiry);return true;
+}
 const server=http.createServer(async(req,res)=>{
  if(req.url==='/admin/begin'||req.url==='/admin/check'){
   res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json');
@@ -53,7 +65,7 @@ room.on('connection',ws=>{
  if(!p){
  const privateKey=process.env.ADMIN_LINK_KEY;
  const fromLink=typeof privateKey==='string'&&privateKey.length>=32&&m.hostKey===privateKey;
- const isAdmin=fromLink||(typeof m.ticket==='string'&&adminEntry.consume(m.ticket));
+ const isAdmin=fromLink||consumeMobilePass(m.mobilePass,privateKey)||(typeof m.ticket==='string'&&adminEntry.consume(m.ticket));
  if(m.type!=='join'||(!isAdmin&&m.token!==token)){ws.close(4001,'invite');return}
  if(isAdmin&&admin){ws.close(4005,'admin present');return}
  if(players.size>=160){ws.close(4004,'full');return}
@@ -75,6 +87,7 @@ setInterval(()=>{
 },100);
 setInterval(()=>{for(const ws of room.clients){if(!ws.alive){ws.terminate();continue}ws.alive=false;ws.ping()}},25000);
 server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log('Listening on port',server.address().port));
+
 
 
 

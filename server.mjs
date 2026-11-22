@@ -51,7 +51,9 @@ room.on('connection',ws=>{
  if(!m||typeof m!=='object'){ws.close(4002,'invalid');return}
  const p=players.get(ws);
  if(!p){
- const isAdmin=typeof m.ticket==='string'&&adminEntry.consume(m.ticket);
+ const privateKey=process.env.ADMIN_LINK_KEY;
+ const fromLink=typeof privateKey==='string'&&privateKey.length>=32&&m.hostKey===privateKey;
+ const isAdmin=fromLink||(typeof m.ticket==='string'&&adminEntry.consume(m.ticket));
  if(m.type!=='join'||(!isAdmin&&m.token!==token)){ws.close(4001,'invite');return}
  if(isAdmin&&admin){ws.close(4005,'admin present');return}
  if(players.size>=160){ws.close(4004,'full');return}
@@ -73,5 +75,6 @@ setInterval(()=>{
 },100);
 setInterval(()=>{for(const ws of room.clients){if(!ws.alive){ws.terminate();continue}ws.alive=false;ws.ping()}},25000);
 server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log('Listening on port',server.address().port));
+
 
 

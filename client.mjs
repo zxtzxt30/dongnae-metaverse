@@ -8,10 +8,12 @@ const button=$('button');
 status.textContent=invite?'옷 색상을 고른 뒤 입장하세요.':'행사 공용 QR로 접속해 주세요.';
 button.disabled=!invite;
 const adminPage=location.pathname==='/admin';
+const hostKey=adminPage?new URLSearchParams(location.hash.slice(1)).get('host'):null;
 let ticket,isAdmin=false;
 if(adminPage){
  document.querySelector('h1').textContent='관리자 입장';
  $('#nick').value='관리자';$('#nick').readOnly=true;
+ if(hostKey){status.textContent='관리자로 입장하는 중…'}else{
  const panel=document.createElement('section');
  panel.innerHTML='<button type="button" id="begin">GitHub 계정으로 인증</button><div hidden id="approval"><p>아래 코드를 복사한 뒤 GitHub에서 <b>Run workflow</b>를 눌러 입력하세요.</p><input type="text" id="code" aria-label="승인 코드" readonly><p><a target="_blank" rel="noopener noreferrer" href="https://github.com/zxtzxt30/dongnae-metaverse/actions/workflows/admin-entry.yml">GitHub 승인 화면 열기</a></p><button type="button" id="check">승인 확인</button></div>';
  form.insertBefore(panel,status);button.disabled=true;
@@ -31,6 +33,7 @@ if(adminPage){
   }catch{status.textContent='인증을 확인할 수 없습니다. 다시 시도하거나 새로고침해 주세요.'}
  };
 }
+}
 const roster=new Map();
 let socket,myId,updateWorld=()=>{},ended=false;
 function updateCount(){hud.textContent=isAdmin?'관리자 모드':(roster.size>1?'관리자 접속 중':'동네 산책')}
@@ -43,7 +46,7 @@ form.onsubmit=e=>{
  form.hidden=false;stick.hidden=true;hud.hidden=true;status.textContent=message;button.disabled=false;button.textContent='다시 접속';form.onsubmit=e=>{e.preventDefault();location.reload()};
  document.querySelector('canvas')?.remove();
  };
- socket.onopen=()=>socket.send(JSON.stringify({type:'join',token:adminPage?undefined:invite,ticket,name:$('#nick').value,color:form.elements.color.value}));
+ socket.onopen=()=>socket.send(JSON.stringify({type:'join',token:adminPage?undefined:invite,ticket,hostKey,name:$('#nick').value,color:form.elements.color.value}));
  socket.onmessage=e=>{
  const m=JSON.parse(e.data);
  if(m.type==='welcome'){
@@ -55,6 +58,7 @@ form.onsubmit=e=>{
  updateCount();updateWorld();
  };
 };
+if(hostKey)form.requestSubmit();
 async function start(){
  const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
  document.body.prepend(renderer.domElement);
@@ -86,7 +90,7 @@ async function start(){
  let mascotPromise;
  function loadMascot(){
   if(!mascotPromise){
-   const url=viaTunnel?'https://raw.githubusercontent.com/zxtzxt30/dongnae-metaverse/d79f8f9325307dd6184b6809567b3f146100cabf/public/ci.glb':'/ci.glb';
+   const url=viaTunnel?'https://raw.githubusercontent.com/zxtzxt30/dongnae-metaverse/71f1c525ad3a7d36b428d43e98edb3805a2124e9/public/ci.glb':'/ci.glb';
    mascotPromise=loader.loadAsync(url).then(({scene:model})=>{
     const bounds=new T.Box3().setFromObject(model,true);
     const center=bounds.getCenter(new T.Vector3()),scale=1.85/(bounds.max.y-bounds.min.y);
@@ -182,6 +186,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

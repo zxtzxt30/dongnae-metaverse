@@ -12,3 +12,5 @@ services:
         sync: false
       - key: EVENT_END
         sync: false
+      - key: ADMIN_LINK_KEY
+        generateValue: true

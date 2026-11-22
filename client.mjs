@@ -83,6 +83,26 @@ async function start(){
  });
  gltf.scene.position.y=1.56;scene.add(gltf.scene);
  const person=new T.Group();person.position.set(-65,0,55);scene.add(person);
+ let mascotPromise;
+ function loadMascot(){
+  if(!mascotPromise){
+   const url=viaTunnel?'https://raw.githubusercontent.com/zxtzxt30/dongnae-metaverse/d79f8f9325307dd6184b6809567b3f146100cabf/public/ci.glb':'/ci.glb';
+   mascotPromise=loader.loadAsync(url).then(({scene:model})=>{
+    const bounds=new T.Box3().setFromObject(model,true);
+    const center=bounds.getCenter(new T.Vector3()),scale=1.85/(bounds.max.y-bounds.min.y);
+    const wrapper=new T.Group();wrapper.add(model);wrapper.scale.setScalar(scale);
+    model.position.sub(new T.Vector3(center.x,bounds.min.y,center.z));
+    return wrapper;
+   }).catch(error=>{mascotPromise=undefined;throw error});
+  }
+  return mascotPromise;
+ }
+ let legs=[];
+ if(isAdmin){
+  status.textContent='관리자 아바타를 준비하는 중…';
+  person.add((await loadMascot()).clone(true));
+  if(ended){renderer.dispose();renderer.domElement.remove();return}
+ }else{
  const cloth=new T.MeshStandardMaterial({color:'#198579'});
  function piece(geo,material,x,y,z){
   const mesh=new T.Mesh(geo,material.isMaterial?material:new T.MeshStandardMaterial({color:material}));
@@ -93,23 +113,26 @@ async function start(){
  piece(new T.SphereGeometry(.235,16,12),0xeab994,0,1.55,0);
  piece(new T.SphereGeometry(.245,16,12,0,Math.PI*2,0,1.42),0x413534,0,1.59,0);
  for(const side of [-1,1])piece(capsule(.075,.32),cloth,.28*side,.99,0);
- const legs=[-1,1].map(s=>piece(capsule(.096,.43),0x303f52,.115*s,.311,0));
+ legs=[-1,1].map(s=>piece(capsule(.096,.43),0x303f52,.115*s,.311,0));
  cloth.color.set(form.elements.color.value);
+ }
  const mine=roster.get(myId);person.position.set(mine.x,0,mine.z);
  const peers=new Map();
  function addPeer(p){
-  const avatar=person.clone(),material=cloth.clone();material.color.set(p.color);
-  for(const part of avatar.children)if(part.material===cloth)part.material=material;
+  const avatar=new T.Group();
+  loadMascot().then(model=>{if(avatar.parent)avatar.add(model.clone(true))}).catch(error=>{
+   console.error(error);hud.textContent='관리자 아바타를 불러오지 못했습니다. 새로고침해 주세요.';
+  });
   const label=document.createElement('canvas');label.width=256;label.height=48;
   const ctx=label.getContext('2d');ctx.fillStyle='#123e39';ctx.fillRect(0,0,256,48);
   ctx.fillStyle='white';ctx.font='24px sans-serif';ctx.textAlign='center';ctx.fillText(p.name,128,32,240);
   const texture=new T.CanvasTexture(label),tag=new T.Sprite(new T.SpriteMaterial({map:texture}));
   tag.scale.set(1.6,.3,1);tag.position.y=2;avatar.add(tag);scene.add(avatar);
-  return {avatar,material,tag};
+  return {avatar,tag};
  }
  updateWorld=()=>{
   for(const [id,peer] of peers)if(!roster.has(id)){
-   scene.remove(peer.avatar);peer.material.dispose();peer.tag.material.map.dispose();peer.tag.material.dispose();peers.delete(id);
+   scene.remove(peer.avatar);peer.tag.material.map.dispose();peer.tag.material.dispose();peers.delete(id);
   }
   for(const [id,p] of roster)if(id!==myId&&!peers.has(id)){
    const peer=addPeer(p);peer.avatar.position.set(p.x,0,p.z);peers.set(id,peer);
@@ -159,6 +182,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

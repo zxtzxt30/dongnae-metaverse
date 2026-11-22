@@ -9,7 +9,7 @@ const token=process.env.EVENT_TOKEN;
 const start=Date.parse(process.env.EVENT_START), end=Date.parse(process.env.EVENT_END);
 if(!token || token.length<16 || !(start<end)) throw Error('Set EVENT_TOKEN (16+ characters), EVENT_START and EVENT_END with timezone.');
 const port=Number(process.env.PORT||3000);
-const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/admin',['index.html','text/html; charset=utf-8']],['/walk.js',['walk.js','text/javascript']],['/town.glb',['town.glb','model/gltf-binary']]]);
+const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/admin',['index.html','text/html; charset=utf-8']],['/walk.js',['walk.js','text/javascript']],['/ci.glb',['ci.glb','model/gltf-binary']],['/town.glb',['town.glb','model/gltf-binary']]]);
 const adminEntry=createAdminEntry();
 const server=http.createServer(async(req,res)=>{
  if(req.url==='/admin/begin'||req.url==='/admin/check'){
@@ -73,4 +73,5 @@ setInterval(()=>{
 },100);
 setInterval(()=>{for(const ws of room.clients){if(!ws.alive){ws.terminate();continue}ws.alive=false;ws.ping()}},25000);
 server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log('Listening on port',server.address().port));
+
 

@@ -3,13 +3,14 @@
 </style><header>DONGNAE</header><form><h1>동네 산책</h1><label for="nick">닉네임</label><input id="nick" type="text" value="산책자" maxlength="12" required><fieldset><legend>아바타 옷 색상</legend><label><input type="radio" name="color" value="#198579" checked>청록</label><label><input type="radio" name="color" value="#e87650">산호</label><label><input type="radio" name="color" value="#9274cd">보라</label></fieldset><p id="status" role="status">동네를 불러오는 중…</p><button disabled>산책 시작</button></form><div hidden id="hud"></div><div hidden id="stick" aria-label="이동 조이스틱"><span id="knob"></span></div><script>
 const bundle=document.createElement('script');
 if(location.hostname.endsWith('.lhr.life')){
- bundle.crossOrigin='anonymous';bundle.integrity='sha384-nI3MjdXUO94qscdILSQGYA05RreGC7Sjv5WU3Q47S6E0UxSPyy+3BE2tezRExKay';
- bundle.src='https://cdn.jsdelivr.net/gh/zxtzxt30/dongnae-metaverse@25695f4bc8afc1a26779541face0d06bea8093a5/public/walk.js';
+ bundle.crossOrigin='anonymous';bundle.integrity='sha384-kQI6JvtUv7FLupyMZPYTZ/8b5a5koEYgDH15bdu11zt9xhRekpTdh6mW6XqeP0xU';
+ bundle.src='https://cdn.jsdelivr.net/gh/zxtzxt30/dongnae-metaverse@d5fa860fd88b26624fe238337f431c01a12e442d/public/walk.js';
  bundle.onerror=()=>{const fallback=document.createElement('script');fallback.src='./walk.js';document.body.append(fallback)};
 }else{bundle.src='./walk.js'}
 if(location.pathname==='/'&&!location.hash){const a=document.createElement('a');a.href='/admin';a.textContent='관리자 입장';document.querySelector('form').append(a)}
 document.body.append(bundle);
 </script></html>
+
 
 
 

@@ -1,0 +1,6 @@
+node_modules/
+preview/
+DONGNAE.html
+.env
+event-qr.png
+public/walk.js

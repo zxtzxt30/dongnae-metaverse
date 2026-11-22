@@ -15,7 +15,7 @@ form.onsubmit=e=>{
  ended=false;button.disabled=true;status.textContent='입장 확인 중…';
  socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/room');
  socket.onclose=({code})=>{
- ended=true;const message=({4001:'행사 QR을 다시 확인해 주세요.',4003:'지금은 행사 운영 시간이 아닙니다.',4004:'160명 정원이 찼습니다. 잠시 후 다시 시도해 주세요.'})[code]||'연결이 종료되었습니다.';
+ ended=true;const message=({4001:'행사 QR을 다시 확인해 주세요.',4003:'지금은 행사 운영 시간이 아닙니다.',4010:'3D 장면을 불러오지 못했습니다. 연결 상태를 확인하고 다시 접속해 주세요.',4004:'160명 정원이 찼습니다. 잠시 후 다시 시도해 주세요.'})[code]||'연결이 종료되었습니다.';
  form.hidden=false;stick.hidden=true;hud.hidden=true;status.textContent=message;button.disabled=false;button.textContent='다시 접속';form.onsubmit=e=>{e.preventDefault();location.reload()};
  document.querySelector('canvas')?.remove();
  };
@@ -40,8 +40,16 @@ async function start(){
  scene.add(new T.HemisphereLight(0xfff7eb,0xa7aaa0,2.1));
  const sun=new T.DirectionalLight(0xffefcd,2);sun.position.set(-30,75,42);scene.add(sun);
  const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
- const embedded=$('#model');
- const gltf=embedded?await loader.parseAsync(Uint8Array.from(atob(embedded.textContent.trim()),c=>c.charCodeAt(0)).buffer,''):await loader.loadAsync('./town.glb');
+ const viaTunnel=location.hostname.endsWith('.lhr.life');
+ const model=viaTunnel
+  ? 'https://raw.githubusercontent.com/zxtzxt30/dongnae-metaverse/ebb6dda6518592e48284ca56dd938f5faf8c9299/public/town.glb'
+  : './town.glb';
+ const gltf=await loader.loadAsync(model,event=>{
+  if(ended)return;
+  const total=event.total||44394120;
+  const percent=Math.min(100,Math.floor(100*event.loaded/total));
+  status.textContent=percent<100?'동네 다운로드 중 · '+percent+'%':'다운로드 완료 · 3D 장면을 준비하는 중…';
+ });
  if(ended){renderer.dispose();renderer.domElement.remove();return}
  gltf.scene.traverse(object=>{
   if(!object.isMesh)return;
@@ -127,6 +135,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

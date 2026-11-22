@@ -1,3 +1,4 @@
+import {fork} from 'node:child_process';
 import {createAdminEntry} from './admin-entry.mjs';
 import http from 'node:http';
 import {readFileSync,createReadStream,statSync} from 'node:fs';
@@ -89,10 +90,11 @@ setInterval(()=>{for(const ws of room.clients){if(!ws.alive){ws.terminate();cont
 server.listen(port,process.env.HOST||'0.0.0.0',async()=>{
  console.log('Listening on port',server.address().port);
  if(process.env.MOBILE_RELAY==='1'){
-  const {runMobileRelay}=await import('./mobile-relay.mjs');
-  await runMobileRelay(server.address().port,process.env.EVENT_END);
+  fork(fileURLToPath(new URL('./mobile-relay.mjs',import.meta.url)),[String(server.address().port),process.env.EVENT_END],{windowsHide:true,execArgv:[]});
+
  }
 });
+
 
 
 

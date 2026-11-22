@@ -17,10 +17,11 @@ function publish(origin,end){
  const commit=git(['commit-tree',tree,...parent,'-m','Update current event relay']);
  git(['push','--quiet',remote,commit+':'+ref]);
 }
-export async function runMobileRelay(port,end){
+async function runMobileRelay(port,end){
  const until=Date.parse(end);
  while(Date.now()<until){
   const ssh=spawn('ssh',['-T','-o','BatchMode=yes','-o','StrictHostKeyChecking=accept-new','-o','ConnectTimeout=12','-o','ServerAliveInterval=20','-o','ServerAliveCountMax=3','-o','ExitOnForwardFailure=yes','-R','80:127.0.0.1:'+port,'nokey@localhost.run'],{windowsHide:true,stdio:['ignore','pipe','ignore']});
+  const stop=()=>{ssh.kill();process.exit(0)};process.once('disconnect',stop);
   let current='',published='';
   const closed=new Promise(resolve=>{ssh.once('error',resolve);ssh.once('close',resolve)});
   const lines=createInterface({input:ssh.stdout});
@@ -35,6 +36,8 @@ export async function runMobileRelay(port,end){
    }
    await Promise.race([closed,delay(3000)]);
   }
-  lines.close();ssh.kill();await delay(3000);
+  lines.close();ssh.kill();await delay(3000);process.off('disconnect',stop);
  }
 }
+
+await runMobileRelay(process.argv[2],process.argv[3]);

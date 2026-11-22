@@ -37,7 +37,7 @@ if(adminPage){
 const adminHeight=1.5;
 const roster=new Map();
 let socket,myId,updateWorld=()=>{},ended=false;
-function updateCount(){hud.textContent=isAdmin?'관리자 모드':(roster.size>1?'관리자 접속 중':'동네 산책')}
+function updateCount(){hud.textContent=isAdmin?'관리자 모드':(roster.size>1?'관리자 접속 중':'온라인 동내관리소')}
 form.onsubmit=e=>{
  e.preventDefault();if(socket)return;
  ended=false;button.disabled=true;status.textContent='입장 확인 중…';

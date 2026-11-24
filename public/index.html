@@ -3,8 +3,8 @@
 </style><header>DONGNAE</header><form><h1>온라인 동내관리소</h1><label for="nick">닉네임</label><input id="nick" type="text" value="산책자" maxlength="12" required><fieldset><legend>아바타 옷 색상</legend><label><input type="radio" name="color" value="#198579" checked>청록</label><label><input type="radio" name="color" value="#e87650">산호</label><label><input type="radio" name="color" value="#9274cd">보라</label></fieldset><p id="status" role="status">동네를 불러오는 중…</p><button disabled>산책 시작</button></form><div hidden id="hud"></div><div hidden id="stick" aria-label="이동 조이스틱"><span id="knob"></span></div><script>
 const bundle=document.createElement('script');
 if(location.hostname.endsWith('.lhr.life')){
- bundle.crossOrigin='anonymous';bundle.integrity='sha384-4rRAEVtPNhSajEcwHeIrdumYMpwi4wIF3m/IbaSo2g4e7MoSxLoSioAxinbx7P5E';
- bundle.src='https://cdn.jsdelivr.net/gh/zxtzxt30/dongnae-metaverse@4c8fedf3a5af5ae80d7ca10dd180ca7837d0a66a/public/walk.js';
+ bundle.crossOrigin='anonymous';bundle.integrity='sha384-FWinBjD7rvlIwQTD3il5V1lEBKIV8LA2xfs/L8okZ6uWlyQDkU0ak52k/T4aVmgX';
+ bundle.src='https://cdn.jsdelivr.net/gh/zxtzxt30/dongnae-metaverse@379e265ca75bb1d32b7b9d3f648d2b0114a8f558/public/walk.js';
  bundle.onerror=()=>{const fallback=document.createElement('script');fallback.src='./walk.js';document.body.append(fallback)};
 }else{bundle.src='./walk.js'}
 if(location.pathname==='/'&&!location.hash){const a=document.createElement('a');a.href='/admin';a.textContent='관리자 입장';document.querySelector('form').append(a)}

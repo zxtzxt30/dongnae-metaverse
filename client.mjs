@@ -1,3 +1,4 @@
+import {participantSpawn} from './spawn.mjs';
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
@@ -89,7 +90,7 @@ async function start(){
   }
  });
  gltf.scene.position.y=1.56;scene.add(gltf.scene);
- const person=new T.Group();person.position.set(-65,0,55);scene.add(person);
+ const person=new T.Group();scene.add(person);
  let mascotPromise;
  function loadMascot(){
   if(!mascotPromise){
@@ -123,7 +124,7 @@ async function start(){
  legs=[-1,1].map(s=>piece(capsule(.096,.43),0x303f52,.115*s,.311,0));
  cloth.color.set(form.elements.color.value);
  }
- const mine=roster.get(myId);person.position.set(mine.x,isAdmin?adminHeight:0,mine.z);
+ const spawn=isAdmin?roster.get(myId):participantSpawn;person.position.set(spawn.x,isAdmin?adminHeight:0,spawn.z);
  const peers=new Map();
  function addPeer(p){
   const avatar=new T.Group();
@@ -189,6 +190,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

@@ -54,6 +54,7 @@ form.onsubmit=e=>{
  const m=JSON.parse(e.data);
  if(m.type==='welcome'){
   isAdmin=m.isAdmin===true;if(isAdmin)participantCount=m.count;myId=m.id;for(const p of m.players)roster.set(p.id,p);
+  if(isAdmin)socket.send(JSON.stringify({type:'move',...participantSpawn,a:0}));
   status.textContent='동네를 불러오는 중…';start().catch(err=>{console.error(err);socket.close(4010,'render');});
  }else if(m.type==='attendance'&&isAdmin){participantCount=m.count;updateCount();return}
  else if(m.type==='enter')roster.set(m.player.id,m.player);
@@ -124,7 +125,7 @@ async function start(){
  legs=[-1,1].map(s=>piece(capsule(.096,.43),0x303f52,.115*s,.311,0));
  cloth.color.set(form.elements.color.value);
  }
- const spawn=isAdmin?roster.get(myId):participantSpawn;person.position.set(spawn.x,isAdmin?adminHeight:0,spawn.z);
+ person.position.set(participantSpawn.x,isAdmin?adminHeight:0,participantSpawn.z);
  const peers=new Map();
  function addPeer(p){
   const avatar=new T.Group();
@@ -190,6 +191,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

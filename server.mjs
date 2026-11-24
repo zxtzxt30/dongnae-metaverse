@@ -77,7 +77,7 @@ room.on('connection',ws=>{
  if(isAdmin&&admin){ws.close(4005,'admin present');return}
  if(players.size>=160){ws.close(4004,'full');return}
  clearTimeout(timer);
- const user={id:randomUUID(),name:isAdmin?'관리자':String(m.name||'산책자').slice(0,12),color:['#198579','#e87650','#9274cd'].includes(m.color)?m.color:'#198579',x:isAdmin?-62:participantSpawn.x,z:isAdmin?55:participantSpawn.z,a:0};
+ const user={id:randomUUID(),name:isAdmin?'관리자':String(m.name||'산책자').slice(0,12),color:['#198579','#e87650','#9274cd'].includes(m.color)?m.color:'#198579',x:participantSpawn.x,z:participantSpawn.z,a:0};
  if(isAdmin){admin=user;adminSocket=ws;broadcast({type:'enter',player:user})}
  players.set(ws,user);
  const visible=admin&&!isAdmin?[user,admin]:[user];
@@ -101,6 +101,7 @@ server.listen(port,process.env.HOST||'0.0.0.0',async()=>{
 
  }
 });
+
 
 
 

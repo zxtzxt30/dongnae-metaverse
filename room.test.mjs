@@ -27,6 +27,7 @@ test('shared room, admission, movement, departure and scheduled close',async t=>
  assert.equal(result.status,200);
  const admin=connect('',(await result.json()).ticket);
  const host=await message(admin,'welcome');assert.equal(host.isAdmin,true);assert.equal(host.players.length,1);assert.equal(host.count,2);
+ assert.deepEqual([host.players[0].x,host.players[0].z],[firstWelcome.players[0].x,firstWelcome.players[0].z]);
  const joined=message(admin,'attendance');const extra=connect();const guest=await message(extra,'welcome');
  assert.equal((await joined).count,3);assert.equal(guest.count,undefined);
  const departed=message(admin,'attendance');extra.close();assert.equal((await departed).count,2);
@@ -41,5 +42,6 @@ test('shared room, admission, movement, departure and scheduled close',async t=>
  assert.equal(closes.length,160);assert.ok(closes.every(([code])=>code===4003));
  assert.equal((await once(connect(),'close'))[0],4003);
 });
+
 
 

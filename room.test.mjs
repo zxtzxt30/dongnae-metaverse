@@ -26,7 +26,11 @@ test('shared room, admission, movement, departure and scheduled close',async t=>
  const result=await fetch(base+'/admin/check',{method:'POST',headers:{authorization:'Bearer '+challenge.proof,'test-code':challenge.code}});
  assert.equal(result.status,200);
  const admin=connect('',(await result.json()).ticket);
- const host=await message(admin,'welcome');assert.equal(host.isAdmin,true);assert.equal(host.players.length,1);
+ const host=await message(admin,'welcome');assert.equal(host.isAdmin,true);assert.equal(host.players.length,1);assert.equal(host.count,2);
+ const joined=message(admin,'attendance');const extra=connect();const guest=await message(extra,'welcome');
+ assert.equal((await joined).count,3);assert.equal(guest.count,undefined);
+ const departed=message(admin,'attendance');extra.close();assert.equal((await departed).count,2);
+ assert.ok(!received.some(m=>m.type==='attendance'));
  const moving=message(first,'move');admin.send(JSON.stringify({type:'move',x:-65,z:52,a:1}));assert.deepEqual((await moving).positions[0],[host.id,-65,52,1]);
  const batch=await Promise.all(Array.from({length:157},()=>message(connect(),'welcome')));
  for(const welcome of batch){assert.equal(welcome.players.length,2);assert.equal(welcome.players[1].id,host.id)}
@@ -37,4 +41,5 @@ test('shared room, admission, movement, departure and scheduled close',async t=>
  assert.equal(closes.length,160);assert.ok(closes.every(([code])=>code===4003));
  assert.equal((await once(connect(),'close'))[0],4003);
 });
+
 

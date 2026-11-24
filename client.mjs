@@ -10,7 +10,7 @@ button.disabled=!invite;
 const adminPage=location.pathname==='/admin';
 const hostKey=adminPage?new URLSearchParams(location.hash.slice(1)).get('host'):null;
 const mobilePass=adminPage?new URLSearchParams(location.hash.slice(1)).get('pass'):null;
-let ticket,isAdmin=false;
+let ticket,isAdmin=false,participantCount=0;
 if(adminPage){
  document.querySelector('h1').textContent='관리자 입장';
  $('#nick').value='관리자';$('#nick').readOnly=true;
@@ -38,7 +38,7 @@ if(adminPage){
 const adminHeight=1.5;
 const roster=new Map();
 let socket,myId,updateWorld=()=>{},ended=false;
-function updateCount(){hud.textContent=isAdmin?'관리자 모드':(roster.size>1?'관리자 접속 중':'온라인 동내관리소')}
+function updateCount(){hud.textContent=isAdmin?'관리자 · 현재 참가자 '+participantCount+'명':(roster.size>1?'관리자 접속 중':'온라인 동내관리소')}
 form.onsubmit=e=>{
  e.preventDefault();if(socket)return;
  ended=false;button.disabled=true;status.textContent='입장 확인 중…';
@@ -52,9 +52,10 @@ form.onsubmit=e=>{
  socket.onmessage=e=>{
  const m=JSON.parse(e.data);
  if(m.type==='welcome'){
-  isAdmin=m.isAdmin===true;myId=m.id;for(const p of m.players)roster.set(p.id,p);
+  isAdmin=m.isAdmin===true;if(isAdmin)participantCount=m.count;myId=m.id;for(const p of m.players)roster.set(p.id,p);
   status.textContent='동네를 불러오는 중…';start().catch(err=>{console.error(err);socket.close(4010,'render');});
- }else if(m.type==='enter')roster.set(m.player.id,m.player);
+ }else if(m.type==='attendance'&&isAdmin){participantCount=m.count;updateCount();return}
+ else if(m.type==='enter')roster.set(m.player.id,m.player);
  else if(m.type==='leave')roster.delete(m.id);
  else if(m.type==='move'){for(const [id,x,z,a] of m.positions){const p=roster.get(id);if(p)Object.assign(p,{x,z,a})}}
  updateCount();updateWorld();
@@ -188,6 +189,7 @@ async function start(){
  view();renderer.render(scene,camera);
  });
 }
+
 
 
 

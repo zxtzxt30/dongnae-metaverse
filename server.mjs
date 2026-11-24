@@ -48,14 +48,19 @@ server.on('upgrade',(req,socket,head)=>{
  if(req.url!=='/room'){socket.destroy();return}
  room.handleUpgrade(req,socket,head,ws=>room.emit('connection',ws));
 });
-const players=new Map(), changed=new Set();let admin;
+const players=new Map(), changed=new Set();let admin,adminSocket;
+function notifyParticipantCount(){
+ if(adminSocket?.readyState===WebSocket.OPEN){
+  adminSocket.send(JSON.stringify({type:'attendance',count:players.size-1}));
+ }
+}
 const open=()=>Date.now()>=start && Date.now()<end;
 function broadcast(data){const msg=JSON.stringify(data);for(const ws of players.keys())if(players.get(ws)!==admin&&ws.readyState===WebSocket.OPEN){if(ws.bufferedAmount>524288)ws.terminate();else ws.send(msg)}}
 room.on('connection',ws=>{
  const timer=setTimeout(()=>ws.close(4001,'invite'),8000);
  ws.alive=true;ws.on('pong',()=>ws.alive=true);
  ws.on('error',()=>ws.terminate());
- ws.on('close',()=>{clearTimeout(timer);const p=players.get(ws);if(p){players.delete(ws);changed.delete(p);if(p===admin){admin=undefined;broadcast({type:'leave',id:p.id})}}});
+ ws.on('close',()=>{clearTimeout(timer);const p=players.get(ws);if(p){players.delete(ws);changed.delete(p);if(p===admin){admin=undefined;adminSocket=undefined;broadcast({type:'leave',id:p.id})}else{notifyParticipantCount()}}});
  let lastMove=0;
  ws.on('message',raw=>{
  if(ws.readyState!==WebSocket.OPEN)return;
@@ -72,10 +77,11 @@ room.on('connection',ws=>{
  if(players.size>=160){ws.close(4004,'full');return}
  clearTimeout(timer);
  const user={id:randomUUID(),name:isAdmin?'관리자':String(m.name||'산책자').slice(0,12),color:['#198579','#e87650','#9274cd'].includes(m.color)?m.color:'#198579',x:isAdmin?-62:-65,z:55,a:0};
- if(isAdmin){admin=user;broadcast({type:'enter',player:user})}
+ if(isAdmin){admin=user;adminSocket=ws;broadcast({type:'enter',player:user})}
  players.set(ws,user);
  const visible=admin&&!isAdmin?[user,admin]:[user];
- ws.send(JSON.stringify({type:'welcome',id:user.id,isAdmin,players:visible}));return;
+ ws.send(JSON.stringify({type:'welcome',id:user.id,isAdmin,players:visible,count:isAdmin?players.size-1:undefined}));
+ if(!isAdmin)notifyParticipantCount();return;
  }
  if(p===admin&&m.type==='move'&&Date.now()-lastMove>=65&&[m.x,m.z,m.a].every(n=>Number.isFinite(n)&&Math.abs(n)<10000)){
  lastMove=Date.now();Object.assign(p,{x:m.x,z:m.z,a:m.a});changed.add(p);
@@ -94,6 +100,7 @@ server.listen(port,process.env.HOST||'0.0.0.0',async()=>{
 
  }
 });
+
 
 
 
